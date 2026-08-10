@@ -1,7 +1,7 @@
 import { BookingStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { CreateReviewPayload } from "./review.validation";
+import { CreateReviewPayload, ReviewQuery } from "./review.validation";
 import httpStatus from "http-status";
 
 const createReviewIntoDB = async (
@@ -44,4 +44,18 @@ const createReviewIntoDB = async (
   return review;
 };
 
-export const reviewService = { createReviewIntoDB };
+const getAllReviewsFromDB = async (query: ReviewQuery) => {
+  const reviews = await prisma.review.findMany({
+    select: {
+      id: true,
+      content: true,
+      user: { select: { name: true } },
+      givenStars: true,
+    },
+    ...(query.limit && { take: query.limit }),
+  });
+
+  return reviews;
+};
+
+export const reviewService = { createReviewIntoDB, getAllReviewsFromDB };

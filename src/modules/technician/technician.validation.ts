@@ -12,6 +12,7 @@ export const getTechnicianQuerySchema = z.object({
   minRating: z.coerce.number().min(1).max(5).optional(),
   weekendDays: z.nativeEnum(WeekendDays).optional(),
   searchTerm: z.string().optional(),
+  limit: z.coerce.number().optional(),
 });
 
 export const updateTechnicianProfileSchema = z.object({

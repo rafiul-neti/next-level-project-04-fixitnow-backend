@@ -1,7 +1,10 @@
 import { ServiceWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
-const getAllServicesFromDB = async (query: { searchTerm?: string }) => {
+const getAllServicesFromDB = async (query: {
+  searchTerm?: string;
+  limit?: string;
+}) => {
   const where: ServiceWhereInput = {};
 
   if (query.searchTerm) {
@@ -17,6 +20,7 @@ const getAllServicesFromDB = async (query: { searchTerm?: string }) => {
     include: {
       category: { select: { name: true } },
     },
+    ...(query.limit && { take: Number(query.limit) }),
   });
 
   return services;

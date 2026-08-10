@@ -34,6 +34,7 @@ const getAllTechniciansFromDB = async (query: TechnicianQuery) => {
     maxHourlyRate,
     serviceAreas,
     weekendDays,
+    limit,
   } = query;
 
   const where: TechnicianProfileWhereInput = {};
@@ -84,7 +85,12 @@ const getAllTechniciansFromDB = async (query: TechnicianQuery) => {
       availability: {
         select: { startTime: true, endTime: true, weekendDays: true },
       },
+      technicianServices: { select: { service: { select: { name: true } } } },
+      user: { select: { name: true } },
+      reviews: { select: { givenStars: true } },
+      _count: { select: { reviews: true } },
     },
+    ...(limit && { take: limit }),
   });
 
   return technicians;

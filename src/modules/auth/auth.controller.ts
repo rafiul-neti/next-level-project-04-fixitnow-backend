@@ -38,8 +38,6 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.OK,
     message: "User successfully logged in.",
     data: { accessToken, refreshToken },
-<<<<<<< HEAD
-=======
   });
 });
 
@@ -59,7 +57,6 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
     statusCode: httpStatus.OK,
     message: "Token refreshed successfully.",
     data: result,
->>>>>>> 035200b (feat (refresh token): create POST /api/auth/refresh-token to get a new access token by a refres token)
   });
 });
 

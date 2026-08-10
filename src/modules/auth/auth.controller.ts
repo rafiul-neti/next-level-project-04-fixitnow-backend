@@ -23,21 +23,21 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: false,
-    sameSite: "none",
+    sameSite: "lax",
     maxAge: 24 * 60 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: false,
-    sameSite: "none",
+    sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   sendSuccessResponse(res, {
     statusCode: httpStatus.OK,
     message: "User successfully logged in.",
-    data: { accessToken },
+    data: { accessToken, refreshToken },
   });
 });
 

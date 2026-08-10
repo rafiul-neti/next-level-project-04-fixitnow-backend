@@ -37,7 +37,29 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   sendSuccessResponse(res, {
     statusCode: httpStatus.OK,
     message: "User successfully logged in.",
-    data: { accessToken },
+    data: { accessToken, refreshToken },
+<<<<<<< HEAD
+=======
+  });
+});
+
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies;
+
+  const result = await authService.refreshToken(refreshToken);
+
+  res.cookie("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 24,
+  });
+
+  sendSuccessResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Token refreshed successfully.",
+    data: result,
+>>>>>>> 035200b (feat (refresh token): create POST /api/auth/refresh-token to get a new access token by a refres token)
   });
 });
 

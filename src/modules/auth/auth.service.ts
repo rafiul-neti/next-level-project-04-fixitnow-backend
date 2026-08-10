@@ -6,6 +6,7 @@ import httpStatus from "http-status";
 import config from "../../config";
 import { jwtUtils } from "../../utils/jwt";
 import { Role } from "../../../generated/prisma/enums";
+import { JwtPayload } from "jsonwebtoken";
 
 const registerUserIntoDB = async (payload: IRegisterPayload) => {
   const { name, email, password, phone, registeringAs } = payload;
@@ -111,6 +112,37 @@ const loginUserIntoApp = async (payload: ILoginPayload) => {
   return { accessToken, refreshToken };
 };
 
+const refreshToken = async (token: string) => {
+   const verifyRefreshToken = jwtUtils.verifyToken(
+     token,
+     config.jwt_referesh_secret,
+   );
+
+   if (!verifyRefreshToken.success) {
+     throw new Error(verifyRefreshToken.error);
+   }
+
+   const { id } = verifyRefreshToken.data as JwtPayload;
+   const user = await prisma.user.findUniqueOrThrow({
+     where: { id },
+   });
+
+   const jwtPayload = {
+     id,
+     name: user.name,
+     email: user.email,
+     role: user.role,
+   };
+
+   const accessToken = jwtUtils.createToken(
+     jwtPayload,
+     config.jwt_access_secret,
+     config.jwt_access_expires_in,
+   );
+
+   return { accessToken };
+};
+
 const getCurrentUserFromDB = async (userId: string, role: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -136,5 +168,6 @@ const getCurrentUserFromDB = async (userId: string, role: string) => {
 export const authService = {
   registerUserIntoDB,
   loginUserIntoApp,
+  refreshToken,
   getCurrentUserFromDB,
 };

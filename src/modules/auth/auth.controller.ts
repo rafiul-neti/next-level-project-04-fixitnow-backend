@@ -37,13 +37,13 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   sendSuccessResponse(res, {
     statusCode: httpStatus.OK,
     message: "User successfully logged in.",
-    data: { accessToken, refreshToken },
+    data: { accessToken },
   });
 });
 
 const getCurrentUser = catchAsync(async (req: Request, res: Response) => {
   const { id, role } = req.user as JwtPayload;
-  const user = await authService.getCurrentUserFromDB(id as string, role) ;
+  const user = await authService.getCurrentUserFromDB(id as string, role);
 
   sendSuccessResponse(res, {
     statusCode: httpStatus.OK,
@@ -55,5 +55,6 @@ const getCurrentUser = catchAsync(async (req: Request, res: Response) => {
 export const authController = {
   registerUser,
   loginUser,
+  refreshToken,
   getCurrentUser,
 };

@@ -54,7 +54,7 @@ const registerUserIntoDB = async (payload: IRegisterPayload) => {
             profilePhoto: payload.profilePhoto,
             hourlyRate: payload.hourlyRate,
             experienceYears: payload.experienceYears,
-            serviceAreas: [payload.serviceAreas],
+            serviceAreas: payload.serviceAreas.split(", "),
             availability: {
               create: {
                 weekendDays: payload.weekendDays,

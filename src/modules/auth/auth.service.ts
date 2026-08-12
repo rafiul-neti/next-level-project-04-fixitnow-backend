@@ -109,38 +109,38 @@ const loginUserIntoApp = async (payload: ILoginPayload) => {
     config.jwt_refresh_expires_in,
   );
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, role: user.role };
 };
 
 const refreshToken = async (token: string) => {
-   const verifyRefreshToken = jwtUtils.verifyToken(
-     token,
-     config.jwt_referesh_secret,
-   );
+  const verifyRefreshToken = jwtUtils.verifyToken(
+    token,
+    config.jwt_referesh_secret,
+  );
 
-   if (!verifyRefreshToken.success) {
-     throw new Error(verifyRefreshToken.error);
-   }
+  if (!verifyRefreshToken.success) {
+    throw new Error(verifyRefreshToken.error);
+  }
 
-   const { id } = verifyRefreshToken.data as JwtPayload;
-   const user = await prisma.user.findUniqueOrThrow({
-     where: { id },
-   });
+  const { id } = verifyRefreshToken.data as JwtPayload;
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id },
+  });
 
-   const jwtPayload = {
-     id,
-     name: user.name,
-     email: user.email,
-     role: user.role,
-   };
+  const jwtPayload = {
+    id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 
-   const accessToken = jwtUtils.createToken(
-     jwtPayload,
-     config.jwt_access_secret,
-     config.jwt_access_expires_in,
-   );
+  const accessToken = jwtUtils.createToken(
+    jwtPayload,
+    config.jwt_access_secret,
+    config.jwt_access_expires_in,
+  );
 
-   return { accessToken };
+  return { accessToken };
 };
 
 const getCurrentUserFromDB = async (userId: string, role: string) => {

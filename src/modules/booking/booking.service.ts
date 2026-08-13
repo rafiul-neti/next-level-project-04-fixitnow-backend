@@ -124,12 +124,16 @@ const createBookingIntoDB = async (
 const getAllBookingsFromDB = async (userId: string) => {
   const bookings = await prisma.booking.findMany({
     where: { userId },
+    include: {
+      technician: { select: { user: { select: { name: true } } } },
+      address: { select: { city: true, region: true } },
+    },
   });
 
   return bookings;
 };
 
-const getSingleBookingById = async (userId: string, bookingId: string) => {
+const getSingleBookingById = async (bookingId: string) => {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {

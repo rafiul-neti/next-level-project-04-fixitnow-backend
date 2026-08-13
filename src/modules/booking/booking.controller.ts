@@ -33,7 +33,6 @@ const getAllBookings = catchAsync(async (req: Request, res: Response) => {
 const getSingleBooking = catchAsync(async (req: Request, res: Response) => {
   const { id } = idSchema.parse(req.params);
   const result = await bookingService.getSingleBookingById(
-    req.user?.id as string,
     id,
   );
 

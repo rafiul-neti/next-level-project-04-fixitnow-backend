@@ -14,6 +14,18 @@ router.post(
   reviewController.createReview,
 );
 
-router.get("/", reviewController.getAllReviews)
+router.get("/", reviewController.getAllReviews);
+
+router.get(
+  "/customer",
+  authGuard(Role.CUSTOMER),
+  reviewController.getReviewsByCustomerId,
+);
+
+router.get(
+  "/technician",
+  authGuard(Role.TECHNICIAN),
+  reviewController.getReviewsByTechnicianId,
+);
 
 export const reviewRoutes = router;

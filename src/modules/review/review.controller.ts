@@ -31,4 +31,37 @@ const getAllReviews = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const reviewController = { createReview, getAllReviews };
+const getReviewsByCustomerId = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await reviewService.getCustomerReviewsByID(
+      req.user?.id as string,
+    );
+
+    sendSuccessResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "Retrieved all customer reviews successfully.",
+      data: result,
+    });
+  },
+);
+
+const getReviewsByTechnicianId = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await reviewService.getCustomerReviewsByID(
+      req.user?.id as string,
+    );
+
+    sendSuccessResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "Retrieved all technician reviews successfully.",
+      data: result,
+    });
+  },
+);
+
+export const reviewController = {
+  createReview,
+  getAllReviews,
+  getReviewsByCustomerId,
+  getReviewsByTechnicianId,
+};

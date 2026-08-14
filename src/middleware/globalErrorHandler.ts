@@ -25,6 +25,7 @@ export const globalErrorHandler = (
   } else if (error instanceof AppError) {
     statusCode = error.statusCode;
     message = error.message;
+    errorDetails = error.details;
   } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
     const prismaError = handlePrismaErrors(error);
     statusCode = prismaError.statusCode;

@@ -1,4 +1,8 @@
-import { WhereAbout } from "../../../generated/prisma/enums";
+import {
+  BookingStatus,
+  PaymentStatus,
+  WhereAbout,
+} from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { BookingQuery, CreateBookingInput } from "./booking.validation";
@@ -14,6 +18,40 @@ const createBookingIntoDB = async (
 
   if (!service) {
     throw new AppError(httpStatus.NOT_FOUND, "Service not found!");
+  }
+
+  const hasCompletedUnpaidBooking = await prisma.booking.findFirst({
+    where: {
+      AND: [
+        { userId, status: BookingStatus.COMPLETED },
+        {
+          OR: [
+            { payment: { is: null } },
+            {
+              payment: {
+                status: {
+                  in: [
+                    PaymentStatus.PENDING,
+                    PaymentStatus.FAILED,
+                    PaymentStatus.CANCELLED,
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  if (hasCompletedUnpaidBooking) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "You have an unpaid completed booking. Please settle payment before booking a new service.",
+      {
+        bookingId: hasCompletedUnpaidBooking.id,
+      },
+    );
   }
 
   const createdBooking = await prisma.$transaction(async (tx) => {
@@ -160,6 +198,7 @@ const getSingleBookingById = async (bookingId: string) => {
       },
     },
   });
+
   if (!booking) {
     throw new AppError(
       httpStatus.NOT_FOUND,

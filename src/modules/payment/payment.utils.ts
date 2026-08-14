@@ -26,38 +26,25 @@ export const handleCheckoutSessionCompleted = async (
     return;
   }
 
-  await prisma.$transaction(
-    async (tx) => {
-      await tx.payment.upsert({
-        where: { bookingId },
-        update: {
-          status: PaymentStatus.SUCCEEDED,
-          stripePaymentIntentId: session.payment_intent as string,
-          paidAt: new Date(),
-        },
-        create: {
-          bookingId,
-          userId,
-          stripeCheckoutSessionId: session.id,
-          stripePaymentIntentId: session.payment_intent as string,
-          amount: (session.amount_total ?? 0) / 100,
-          method: "card",
-          provider: PaymentProvider.STRIPE,
-          status: PaymentStatus.SUCCEEDED,
-          paidAt: new Date(),
-        },
-      });
-
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: { status: BookingStatus.PAID },
-      });
+  await prisma.payment.upsert({
+    where: { bookingId },
+    update: {
+      status: PaymentStatus.PAID,
+      stripePaymentIntentId: session.payment_intent as string,
+      paidAt: new Date(),
     },
-    {
-      maxWait: 10000,
-      timeout: 10000,
+    create: {
+      bookingId,
+      userId,
+      stripeCheckoutSessionId: session.id,
+      stripePaymentIntentId: session.payment_intent as string,
+      amount: (session.amount_total ?? 0) / 100,
+      method: "card",
+      provider: PaymentProvider.STRIPE,
+      status: PaymentStatus.PAID,
+      paidAt: new Date(),
     },
-  );
+  });
 };
 
 export const handleCheckoutSessionExpired = async (
@@ -69,7 +56,7 @@ export const handleCheckoutSessionExpired = async (
 
   if (!bookingId) {
     console.error(
-      "[stripe webhook] checkout.session.completed missing bookingId in metadata",
+      "[stripe webhook] checkout.session.expired missing bookingId in metadata",
       {
         sessionId: session.id,
       },
@@ -90,7 +77,7 @@ export const handlePaymentIntentFailed = async (
 
   if (!bookingId) {
     console.error(
-      "[stripe webhook] checkout.session.completed missing bookingId in metadata",
+      "[stripe webhook] checkout.session.payment_failed missing bookingId in metadata",
       {
         paymentIntentId: paymentIntent.id,
       },

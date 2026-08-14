@@ -155,6 +155,9 @@ const getSingleBookingById = async (bookingId: string) => {
       address: {
         omit: { id: true, userId: true, createdAt: true, updatedAt: true },
       },
+      payment: {
+        select: { status: true, provider: true, method: true, paidAt: true },
+      },
     },
   });
   if (!booking) {

@@ -15,7 +15,6 @@ enum BookingStatus {
   REQUESTED
   ACCEPTED
   DECLINED
-  PAID
   IN_PROGRESS
   COMPLETED
 }
@@ -30,8 +29,11 @@ enum WeekendDays {
 // payments enums
 enum PaymentStatus {
   PENDING
-  SUCCEEDED
   FAILED
+  PAID
+  REQUESTED_REFUND
+  REFUNDED
+  CANCELLED
 }
 
 // address whereabout status

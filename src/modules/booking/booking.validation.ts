@@ -30,7 +30,7 @@ export const idSchema = z.object({
 });
 
 export const bookingQuerySchema = z.object({
-  sortBy: z.string(),
+  sortBy: z.string().optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
 });
 

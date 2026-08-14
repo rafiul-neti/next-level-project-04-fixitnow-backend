@@ -29,4 +29,10 @@ export const idSchema = z.object({
   id: z.uuid(),
 });
 
+export const bookingQuerySchema = z.object({
+  sortBy: z.string(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
+});
+
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+export type BookingQuery = z.infer<typeof bookingQuerySchema>;

@@ -1,7 +1,7 @@
 import { WhereAbout } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { CreateBookingInput } from "./booking.validation";
+import { BookingQuery, CreateBookingInput } from "./booking.validation";
 import httpStatus from "http-status";
 
 const createBookingIntoDB = async (
@@ -121,13 +121,17 @@ const createBookingIntoDB = async (
   return createdBooking;
 };
 
-const getAllBookingsFromDB = async (userId: string) => {
+const getAllBookingsFromDB = async (userId: string, query: BookingQuery) => {
   const bookings = await prisma.booking.findMany({
     where: { userId },
     include: {
+      service: { select: { name: true } },
       technician: { select: { user: { select: { name: true } } } },
       address: { select: { city: true, region: true } },
     },
+    ...(query.sortBy && {
+      orderBy: { [query.sortBy]: query.sortOrder ? query.sortOrder : "desc" },
+    }),
   });
 
   return bookings;

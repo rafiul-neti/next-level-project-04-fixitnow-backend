@@ -1,4 +1,4 @@
-import { BookingStatus } from "../../../generated/prisma/enums";
+import { BookingStatus, PaymentStatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { CreateReviewPayload, ReviewQuery } from "./review.validation";
@@ -9,24 +9,28 @@ const createReviewIntoDB = async (
   bookingId: string,
   payload: CreateReviewPayload,
 ) => {
-  const booking = await prisma.booking.findUnique({
+  const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
       userId,
     },
+    include: { payment: { select: { status: true } } },
   });
 
   if (!booking) {
     throw new AppError(
-      httpStatus.UNAUTHORIZED,
+      httpStatus.FORBIDDEN,
       "You can't review a service you didn't book!",
     );
   }
 
-  if (booking.status !== BookingStatus.COMPLETED) {
+  if (
+    booking.status !== BookingStatus.COMPLETED ||
+    booking.payment?.status !== PaymentStatus.PAID
+  ) {
     throw new AppError(
       httpStatus.CONFLICT,
-      "You can only review a completed booking!",
+      "You can only review a booking that is completed and you have paid for!",
     );
   }
 

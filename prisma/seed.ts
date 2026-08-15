@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import config from "../src/config";
 import { WeekendDays } from "../generated/prisma/enums";
+import { Prisma } from "../generated/prisma/client";
 
 // Config
 const SALT_ROUNDS = Number(config.bcrypt_salt_rounds);
@@ -303,6 +304,24 @@ function makePhone(counter: number) {
   return PHONE_PREFIX + String(1000000 + counter).slice(-7);
 }
 
+// Generates a believable startedAt/completedAt/workedMinutes/totalPrice
+// set for a COMPLETED booking, given the technician's hourly rate.
+function makeCompletedBookingTimeline(hourlyRate: number, daysAgo: number) {
+  const workedMinutes = 45 + Math.floor(Math.random() * 196); // 45–240 min
+
+  const startedAt = new Date();
+  startedAt.setDate(startedAt.getDate() - daysAgo);
+  startedAt.setHours(9 + Math.floor(Math.random() * 7), 0, 0, 0); // 9am–4pm start
+
+  const completedAt = new Date(startedAt.getTime() + workedMinutes * 60_000);
+
+  const totalPrice = new Prisma.Decimal(
+    ((workedMinutes / 60) * hourlyRate).toFixed(2),
+  );
+
+  return { startedAt, completedAt, workedMinutes, totalPrice };
+}
+
 const REVIEW_SNIPPETS = [
   {
     content: "Arrived on time and fixed the issue quickly. Very professional.",
@@ -487,6 +506,11 @@ async function main() {
         },
       });
 
+      const timeline = makeCompletedBookingTimeline(
+        tech.profile.hourlyRate,
+        5 + (reviewSnippetIndex + j) * 3, // spread bookings out over recent weeks
+      );
+
       const booking = await prisma.booking.create({
         data: {
           userId: customer.id,
@@ -494,6 +518,10 @@ async function main() {
           technicianId: tech.profile.id,
           addressId: address.id,
           status: "COMPLETED",
+          startedAt: timeline.startedAt,
+          completedAt: timeline.completedAt,
+          workedMinutes: timeline.workedMinutes,
+          totalPrice: timeline.totalPrice,
         },
       });
 
@@ -516,6 +544,52 @@ async function main() {
     reviewSnippetIndex++;
   }
   console.log(`Created ${reviewCount} completed bookings with reviews`);
+
+  // 7. In-progress bookings 
+  let inProgressCount = 0;
+
+  for (const tech of technicianProfiles) {
+    const eligibleServiceIds = tech.services.flatMap(
+      (service) => serviceIdByName.get(service) ?? [],
+    );
+    if (eligibleServiceIds.length === 0) continue;
+
+    const customer = customers[inProgressCount % customers.length]!;
+    const serviceId = eligibleServiceIds[0]!;
+    const area = tech.profile.serviceAreas[0] ?? "Rajshahi";
+
+    const address = await prisma.address.upsert({
+      where: {
+        userId_whereAbout: { userId: customer.id, whereAbout: "HOME" },
+      },
+      update: {},
+      create: {
+        userId: customer.id,
+        address_line_1: "House 12, Road 4",
+        city: area,
+        region: "Rajshahi Division",
+        postCode: "6500",
+        whereAbout: "HOME",
+      },
+    });
+
+    const startedAt = new Date();
+    startedAt.setHours(startedAt.getHours() - (1 + (inProgressCount % 4))); // started 1-4 hrs ago
+
+    await prisma.booking.create({
+      data: {
+        userId: customer.id,
+        serviceId,
+        technicianId: tech.profile.id,
+        addressId: address.id,
+        status: "IN_PROGRESS",
+        startedAt,
+      },
+    });
+
+    inProgressCount++;
+  }
+  console.log(`Created ${inProgressCount} in-progress bookings (startedAt only)`);
 
   console.log("Seeding finished.");
   console.log(`All seeded users share the password: ${SEED_PASSWORD}`);

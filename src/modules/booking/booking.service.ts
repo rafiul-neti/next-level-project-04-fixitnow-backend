@@ -166,6 +166,15 @@ const getAllBookingsFromDB = async (userId: string, query: BookingQuery) => {
       service: { select: { name: true } },
       technician: { select: { user: { select: { name: true } } } },
       address: { select: { city: true, region: true } },
+      payment: {
+        select: {
+          status: true,
+          provider: true,
+          method: true,
+          paidAt: true,
+          amount: true,
+        },
+      },
     },
     ...(query.sortBy && {
       orderBy: { [query.sortBy]: query.sortOrder ? query.sortOrder : "desc" },
@@ -194,7 +203,13 @@ const getSingleBookingById = async (bookingId: string) => {
         omit: { id: true, userId: true, createdAt: true, updatedAt: true },
       },
       payment: {
-        select: { status: true, provider: true, method: true, paidAt: true },
+        select: {
+          status: true,
+          provider: true,
+          method: true,
+          paidAt: true,
+          amount: true,
+        },
       },
     },
   });

@@ -43,8 +43,8 @@ const createCheckoutSession = async (customerId: string, bookingId: string) => {
     customer_email: booking.user.email,
     metadata: { userId: booking.userId, bookingId: booking.id },
     payment_intent_data: { metadata: { bookingId: booking.id } },
-    success_url: `${config.app_url}/${booking.id}/checkout?success=true`,
-    cancel_url: `${config.app_url}/${booking.id}/checkout?success=false`,
+    success_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=true`,
+    cancel_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=false`,
   });
 
   const payment = await prisma.payment.upsert({

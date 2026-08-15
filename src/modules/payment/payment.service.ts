@@ -15,11 +15,12 @@ import {
 } from "../../../generated/prisma/enums";
 
 const createCheckoutSession = async (customerId: string, bookingId: string) => {
-  const booking = await prisma.booking.findUnique({
+  const booking = await prisma.booking.findFirst({
     where: { id: bookingId, userId: customerId },
     include: {
       service: { select: { name: true } },
       user: { select: { email: true } },
+      payment: { select: { status: true } },
     },
   });
 
@@ -27,25 +28,42 @@ const createCheckoutSession = async (customerId: string, bookingId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Booking not found!");
   }
 
-  const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        price_data: {
-          currency: "bdt",
-          unit_amount: Math.round(Number(booking.totalPrice) * 100),
-          product_data: { name: booking.service.name },
+  if (booking.payment?.status === PaymentStatus.PAID) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "This booking has already been paid for.",
+    );
+  }
+
+  if (booking.payment?.status === PaymentStatus.PENDING) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "A payment is already in progress for this booking. Please complete or wait for it to expire.",
+    );
+  }
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      line_items: [
+        {
+          price_data: {
+            currency: "bdt",
+            unit_amount: Math.round(Number(booking.totalPrice) * 100),
+            product_data: { name: booking.service.name },
+          },
+          quantity: 1,
         },
-        quantity: 1,
-      },
-    ],
-    mode: "payment",
-    payment_method_types: ["card"],
-    customer_email: booking.user.email,
-    metadata: { userId: booking.userId, bookingId: booking.id },
-    payment_intent_data: { metadata: { bookingId: booking.id } },
-    success_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=true`,
-    cancel_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=false`,
-  });
+      ],
+      mode: "payment",
+      payment_method_types: ["card"],
+      customer_email: booking.user.email,
+      metadata: { userId: booking.userId, bookingId: booking.id },
+      payment_intent_data: { metadata: { bookingId: booking.id } },
+      success_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=true`,
+      cancel_url: `${config.app_url}/dashboard/customer/my-bookings/${booking.id}/checkout?success=false`,
+    },
+    { idempotencyKey: `payment-session-${booking.id}` },
+  );
 
   const payment = await prisma.payment.upsert({
     where: { bookingId },

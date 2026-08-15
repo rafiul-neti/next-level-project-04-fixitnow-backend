@@ -34,10 +34,21 @@ const createReviewIntoDB = async (
     );
   }
 
+  const isReviewAlreadyGiven = await prisma.review.findUnique({
+    where: { bookingId: booking.id },
+  });
+
+  if (isReviewAlreadyGiven) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "You can't review a booking twice!",
+    );
+  }
+
   const review = await prisma.review.create({
     data: {
       content: payload.content ?? "",
-      givenStars: payload.rating,
+      givenStars: payload.givenStars,
       bookingId: booking.id,
       userId: booking.userId,
       technicianId: booking.technicianId,

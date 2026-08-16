@@ -131,6 +131,14 @@ const getUserPaymentsFromDB = async (userId: string) => {
   const payments = await prisma.payment.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    include: {
+      booking: {
+        select: {
+          service: { select: { name: true } },
+          technician: { select: { user: { select: { name: true } } } },
+        },
+      },
+    },
   });
 
   return payments;

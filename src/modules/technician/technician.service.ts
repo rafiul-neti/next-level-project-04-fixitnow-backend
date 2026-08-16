@@ -111,6 +111,29 @@ const getSingleTechnicianByID = async (technicianId: string) => {
   return technician;
 };
 
+const getTechnicianDetailsFromDB = async (id: string) => {
+  const technician = await prisma.technicianProfile.findUnique({
+    where: { id },
+    include: {
+      availability: {
+        select: { startTime: true, endTime: true, weekendDays: true },
+      },
+      bookings: {
+        include: {
+          payment: {
+            select: { amount: true, method: true, paidAt: true, status: true },
+          },
+          review: { select: { givenStars: true, content: true } },
+        },
+        select: { service: { select: { name: true } }, status: true },
+      },
+      _count: { select: { reviews: true } },
+    },
+  });
+
+  return technician;
+};
+
 const updateTechnicianProfileByTechnicianId = async (
   userId: string,
   payload: UpdateTechnicianProfile,
@@ -221,6 +244,7 @@ const updateBookingStatusByBookingId = async (
 export const technicianService = {
   getAllTechniciansFromDB,
   getSingleTechnicianByID,
+  getTechnicianDetailsFromDB,
   updateTechnicianProfileByTechnicianId,
   updateAvailabilitySlotsByTechnicianId,
   getTechnicianBookingsByTechnicianId,

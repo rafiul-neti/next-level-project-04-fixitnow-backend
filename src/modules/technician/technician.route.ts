@@ -21,6 +21,12 @@ router.get(
 
 router.get("/:id", technicianController.getSingleTechnician);
 
+router.get(
+  "/:technicianId/dashboard",
+  authGuard(Role.TECHNICIAN),
+  technicianController.getTechnicianDetails,
+);
+
 router.put(
   "/profile",
   authGuard(Role.TECHNICIAN),

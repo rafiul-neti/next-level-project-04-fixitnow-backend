@@ -192,11 +192,33 @@ const updateAvailabilitySlotsByTechnicianId = async (
   return updateAvailability;
 };
 
-const getTechnicianBookingsByTechnicianId = async (userId: string) => {
+const getTechnicianBookingsByTechnicianId = async (
+  userId: string,
+  query: TechnicianQuery,
+) => {
   const technician = await getTechnicianOrThrow(userId);
 
   const bookings = await prisma.booking.findMany({
-    where: { technicianId: technician.id },
+    where: { technicianId: technician.id, status: query.status },
+    include: {
+      user: { select: { name: true, phone: true, email: true } },
+      address: {
+        omit: {
+          id: true,
+          userId: true,
+          whereAbout: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      service: {
+        select: {
+          name: true,
+          description: true,
+          category: { select: { name: true } },
+        },
+      },
+    },
   });
 
   return bookings;

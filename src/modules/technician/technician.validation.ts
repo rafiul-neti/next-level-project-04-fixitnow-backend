@@ -10,9 +10,10 @@ export const getTechnicianQuerySchema = z.object({
     .transform((v) => v.split(",").map((a) => a.trim()))
     .optional(),
   minRating: z.coerce.number().min(1).max(5).optional(),
-  weekendDays: z.nativeEnum(WeekendDays).optional(),
+  weekendDays: z.enum(WeekendDays).optional(),
   searchTerm: z.string().optional(),
   limit: z.coerce.number().optional(),
+  status: z.enum(BookingStatus).optional(),
 });
 
 export const updateTechnicianProfileSchema = z.object({
@@ -35,7 +36,7 @@ const timeStringSchema = z
 
 export const updateAvailabilitySlotsSchema = z
   .object({
-    weekendDays: z.nativeEnum(WeekendDays).optional(),
+    weekendDays: z.enum(WeekendDays).optional(),
     startTime: timeStringSchema.optional(),
     endTime: timeStringSchema.optional(),
   })
@@ -52,7 +53,7 @@ export const updateAvailabilitySlotsSchema = z
     },
   );
 
-export const updateBookingStatusSchema = z.object({
+export const bookingStatusSchema = z.object({
   status: z.enum(BookingStatus),
 });
 
@@ -66,4 +67,4 @@ export type UpdateAvailabilitySlots = z.infer<
   typeof updateAvailabilitySlotsSchema
 >;
 
-export type UpdateBookingStatus = z.infer<typeof updateBookingStatusSchema>;
+export type UpdateBookingStatus = z.infer<typeof bookingStatusSchema>;

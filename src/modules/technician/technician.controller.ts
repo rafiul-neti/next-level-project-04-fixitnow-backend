@@ -3,6 +3,10 @@ import catchAsync from "../../utils/catchAsync";
 import { technicianService } from "./technician.service";
 import { sendSuccessResponse } from "../../utils/sendSuccessResponse";
 import httpStatus from "http-status";
+import {
+  bookingStatusSchema,
+  updateAvailabilitySlotsSchema,
+} from "./technician.validation";
 
 const getAllTechnicians = catchAsync(async (req: Request, res: Response) => {
   const result = await technicianService.getAllTechniciansFromDB(
@@ -57,10 +61,12 @@ const updateTechnicianProfile = catchAsync(
 
 const updateAvailabilitySlots = catchAsync(
   async (req: Request, res: Response) => {
+    const payload = updateAvailabilitySlotsSchema.parse(req.body);
+
     const result =
       await technicianService.updateAvailabilitySlotsByTechnicianId(
         req.user?.id as string,
-        req.body,
+        payload,
       );
 
     sendSuccessResponse(res, {
@@ -73,8 +79,10 @@ const updateAvailabilitySlots = catchAsync(
 
 const getTechnicianBookings = catchAsync(
   async (req: Request, res: Response) => {
+    const query = req.validatedQuery;
+
     const result = await technicianService.getTechnicianBookingsByTechnicianId(
-      req.user?.id as string,
+      req.user?.id as string, query
     );
 
     sendSuccessResponse(res, {
@@ -85,23 +93,27 @@ const getTechnicianBookings = catchAsync(
   },
 );
 
-const getTechnicianServices = catchAsync(async(req: Request, res: Response) => {
-  const result = await technicianService.getTechnicianServices(
-    req.params.technicianId as string,
-  );
+const getTechnicianServices = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await technicianService.getTechnicianServices(
+      req.params.technicianId as string,
+    );
 
-  sendSuccessResponse(res, {
-    statusCode: httpStatus.OK,
-    message: "Retrieved technician services.",
-    data: result,
-  });
-})
+    sendSuccessResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "Retrieved technician services.",
+      data: result,
+    });
+  },
+);
 
 const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
+  const payload = bookingStatusSchema.parse(req.body);
+
   const result = await technicianService.updateBookingStatusByBookingId(
     req.user?.id as string,
     req.params.bookingId as string,
-    req.body,
+    payload,
   );
 
   sendSuccessResponse(res, {

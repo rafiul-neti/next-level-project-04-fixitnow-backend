@@ -53,7 +53,7 @@ export const updateAvailabilitySlotsSchema = z
   );
 
 export const updateBookingStatusSchema = z.object({
-  status: z.nativeEnum(BookingStatus),
+  status: z.enum(BookingStatus),
 });
 
 export type TechnicianQuery = z.infer<typeof getTechnicianQuerySchema>;

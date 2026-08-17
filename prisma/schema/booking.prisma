@@ -28,6 +28,7 @@ model Booking {
   updatedAt DateTime      @updatedAt
 
   @@index([userId, status])
+  @@index([id, technicianId])
 
   @@map("bookings")
 }

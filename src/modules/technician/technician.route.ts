@@ -27,6 +27,18 @@ router.get(
   technicianController.getTechnicianDetails,
 );
 
+router.get(
+  "/technician/bookings",
+  authGuard(Role.TECHNICIAN),
+  technicianController.getTechnicianBookings,
+);
+
+router.get(
+  "/:technicianId/services",
+  authGuard(Role.TECHNICIAN),
+  technicianController.getTechnicianServices,
+);
+
 router.put(
   "/profile",
   authGuard(Role.TECHNICIAN),
@@ -39,12 +51,6 @@ router.put(
   authGuard(Role.TECHNICIAN),
   validateRequest(updateAvailabilitySlotsSchema),
   technicianController.updateAvailabilitySlots,
-);
-
-router.get(
-  "/technician/bookings",
-  authGuard(Role.TECHNICIAN),
-  technicianController.getTechnicianBookings,
 );
 
 router.patch(

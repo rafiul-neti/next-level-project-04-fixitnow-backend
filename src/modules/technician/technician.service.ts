@@ -112,26 +112,54 @@ const getSingleTechnicianByID = async (technicianId: string) => {
 };
 
 const getTechnicianDetailsFromDB = async (id: string) => {
-  const technician = await prisma.technicianProfile.findUnique({
-    where: { id },
-    include: {
-      availability: {
-        select: { startTime: true, endTime: true, weekendDays: true },
-      },
-      bookings: {
-        include: {
-          payment: {
-            select: { amount: true, method: true, paidAt: true, status: true },
-          },
-          review: { select: { givenStars: true, content: true } },
+  const [technician, ratingAgg] = await Promise.all([
+    prisma.technicianProfile.findUnique({
+      where: { id },
+      include: {
+        availability: {
+          select: { startTime: true, endTime: true, weekendDays: true },
         },
-        select: { service: { select: { name: true } }, status: true },
+        bookings: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            payment: {
+              select: {
+                amount: true,
+                method: true,
+                paidAt: true,
+                status: true,
+              },
+            },
+            review: { select: { givenStars: true, content: true } },
+            service: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          omit: {
+            userId: true,
+            serviceId: true,
+            addressId: true,
+            technicianId: true,
+          },
+        },
+        user: { select: { name: true } },
+        _count: {
+          select: { reviews: true, technicianServices: true, bookings: true },
+        },
       },
-      _count: { select: { reviews: true } },
-    },
-  });
+      omit: { userId: true },
+    }),
+    prisma.review.aggregate({
+      where: { booking: { technicianId: id } },
+      _avg: { givenStars: true },
+    }),
+  ]);
 
-  return technician;
+  const data = { ...technician, averagerating: ratingAgg._avg.givenStars };
+
+  return data;
 };
 
 const updateTechnicianProfileByTechnicianId = async (
@@ -181,9 +209,15 @@ const updateBookingStatusByBookingId = async (
 ) => {
   const technician = await getTechnicianOrThrow(userId);
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId, technicianId: technician.id },
-  });
+  const [booking, technicianInProgressCount] = await Promise.all([
+    prisma.booking.findFirst({
+      where: { id: bookingId, technicianId: technician.id },
+    }),
+    prisma.booking.count({
+      where: { technicianId: technician.id, status: BookingStatus.IN_PROGRESS },
+    }),
+  ]);
+
   if (!booking) {
     throw new AppError(httpStatus.NOT_FOUND, "Booking not found!");
   }
@@ -195,6 +229,17 @@ const updateBookingStatusByBookingId = async (
     };
   }
 
+  if (
+    payload.status === BookingStatus.IN_PROGRESS &&
+    technicianInProgressCount &&
+    technicianInProgressCount >= 2
+  ) {
+    throw new AppError(
+      httpStatus.CONFLICT,
+      "Technician already has 2 bookings in progress!",
+    );
+  }
+
   if (booking.status === BookingStatus.COMPLETED) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
@@ -204,7 +249,7 @@ const updateBookingStatusByBookingId = async (
 
   const updateData: BookingUpdateInput = { ...payload };
 
-  if (payload.status === BookingStatus.ACCEPTED) {
+  if (payload.status === BookingStatus.IN_PROGRESS) {
     updateData.startedAt = new Date();
   }
 
@@ -241,6 +286,23 @@ const updateBookingStatusByBookingId = async (
   };
 };
 
+const getTechnicianServices = async (technicianId: string) => {
+  const technicianServices = await prisma.technicianService.findMany({
+    where: { technicianId },
+    include: {
+      service: {
+        select: {
+          name: true,
+          description: true,
+          category: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  return technicianServices;
+};
+
 export const technicianService = {
   getAllTechniciansFromDB,
   getSingleTechnicianByID,
@@ -249,4 +311,5 @@ export const technicianService = {
   updateAvailabilitySlotsByTechnicianId,
   getTechnicianBookingsByTechnicianId,
   updateBookingStatusByBookingId,
+  getTechnicianServices,
 };

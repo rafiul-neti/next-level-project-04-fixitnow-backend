@@ -1,3 +1,4 @@
+import { Role } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import findUserOrThrow from "../../utils/findUserOrThrow";
@@ -6,41 +7,91 @@ import httpStatus from "http-status";
 
 const getAllUsersFromDB = async () => {
   const users = await prisma.user.findMany({
-    omit: { password: true },
-    include: {
-      technician: {
-        select: {
-          technicianServices: {
-            select: {
-              service: {
-                select: {
-                  name: true,
-                  description: true,
-                  category: { select: { name: true } },
-                },
-              },
-            },
-          },
-          availability: true,
-          experienceYears: true,
-          hourlyRate: true,
-          serviceAreas: true,
-        },
-      },
-      addresses: { omit: { userId: true } },
-      reviews: {
-        select: {
-          id: true,
-          bookingId: true,
-          technicianId: true,
-          content: true,
-          givenStars: true,
-        },
-      },
-    },
+    omit: { password: true, updatedAt: true },
   });
 
   return users;
+};
+
+const getAllBookingsFromDB = async () => {
+  const bookings = await prisma.booking.findMany({
+    include: {
+      address: {
+        select: {
+          address_line_1: true,
+          address_line_2: true,
+          city: true,
+          postCode: true,
+          region: true,
+        },
+      },
+      payment: { select: { amount: true, failureReason: true, status: true } },
+      service: {
+        select: {
+          name: true,
+          category: { select: { name: true } },
+          description: true,
+        },
+      },
+      technician: { select: { user: { select: { name: true } } } },
+      user: { select: { name: true, email: true, phone: true } },
+    },
+  });
+
+  return bookings;
+};
+
+const getAllCategoriesFromDB = async () => {
+  const categories = await prisma.category.findMany({
+    include: {
+      services: { select: { id: true, name: true, description: true } },
+    },
+  });
+
+  return categories;
+};
+
+const getAdminDashboardStats = async () => {
+  const [
+    totalUsers,
+    totalBookings,
+    totalRevenue,
+    averageRating,
+    recentBookings,
+  ] = await Promise.all([
+    prisma.user.count({ where: { role: { not: Role.ADMIN } } }),
+    prisma.booking.count(),
+    prisma.payment.aggregate({
+      where: { amount: { not: undefined } },
+      _sum: { amount: true },
+    }),
+    prisma.review.aggregate({
+      where: { givenStars: { not: undefined } },
+      _avg: { givenStars: true },
+    }),
+    prisma.booking.findMany({
+      select: {
+        user: { select: { name: true } },
+        technician: { select: { user: { select: { name: true } } } },
+        service: { select: { name: true } },
+        id: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+  ]);
+
+  return {
+    stats: {
+      totalUsers,
+      totalBookings,
+      totalRevenue: totalRevenue._sum.amount,
+      averageRating: averageRating._avg.givenStars,
+    },
+    recentBookings,
+  };
 };
 
 const updateUserStatusByUserId = async (
@@ -65,22 +116,6 @@ const updateUserStatusByUserId = async (
   return { message: "User's status updated successfully.", data: updateUser };
 };
 
-const getAllBookingsFromDB = async () => {
-  const bookings = await prisma.booking.findMany();
-
-  return bookings;
-};
-
-const getAllCategoriesFromDB = async () => {
-  const categories = await prisma.category.findMany({
-    include: {
-      services: { select: { id: true, name: true, description: true } },
-    },
-  });
-
-  return categories;
-};
-
 const createNewServiceCategoryIntoDB = async (payload: CreateCategory) => {
   const category = await prisma.category.findUnique({
     where: { name: payload.name },
@@ -100,8 +135,9 @@ const createNewServiceCategoryIntoDB = async (payload: CreateCategory) => {
 
 export const adminService = {
   getAllUsersFromDB,
-  updateUserStatusByUserId,
+  getAdminDashboardStats,
   getAllBookingsFromDB,
   getAllCategoriesFromDB,
+  updateUserStatusByUserId,
   createNewServiceCategoryIntoDB,
 };

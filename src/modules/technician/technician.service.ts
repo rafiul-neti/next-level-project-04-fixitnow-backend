@@ -97,18 +97,29 @@ const getAllTechniciansFromDB = async (query: TechnicianQuery) => {
 };
 
 const getSingleTechnicianByID = async (technicianId: string) => {
-  const technician = await prisma.technicianProfile.findUniqueOrThrow({
-    where: { id: technicianId },
-    include: {
-      _count: { select: { reviews: true } },
-      reviews: { omit: { technicianId: true, id: true } },
-      availability: {
-        select: { weekendDays: true, startTime: true, endTime: true },
+  const [technician, averageRating] = await Promise.all([
+    prisma.technicianProfile.findUniqueOrThrow({
+      where: { id: technicianId },
+      include: {
+        _count: { select: { reviews: true } },
+        availability: {
+          select: { weekendDays: true, startTime: true, endTime: true },
+        },
+        user: { select: { name: true } },
       },
-    },
-  });
+    }),
+    prisma.review.aggregate({
+      where: { technicianId },
+      _avg: { givenStars: true },
+    }),
+  ]);
 
-  return technician;
+  const result = {
+    ...technician,
+    averageRating: averageRating._avg.givenStars,
+  };
+
+  return result;
 };
 
 const getTechnicianDetailsFromDB = async (id: string) => {

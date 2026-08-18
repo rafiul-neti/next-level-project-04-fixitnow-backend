@@ -9,13 +9,6 @@ const router = Router();
 
 router.get("/users", authGuard(Role.ADMIN), adminController.getAllUsers);
 
-router.patch(
-  "/users/:userId",
-  authGuard(Role.ADMIN),
-  validateRequest(userStatusSchema),
-  adminController.updateUserStatus,
-);
-
 router.get("/bookings", authGuard(Role.ADMIN), adminController.getAllBookings);
 
 router.get(
@@ -24,11 +17,24 @@ router.get(
   adminController.getAllCategories,
 );
 
+router.get(
+  "/dashboard",
+  authGuard(Role.ADMIN),
+  adminController.adminDashboardStats,
+);
+
 router.post(
   "/categories",
   authGuard(Role.ADMIN),
   validateRequest(createCategorySchema),
   adminController.createNewServiceCategory,
+);
+
+router.patch(
+  "/users/:userId",
+  authGuard(Role.ADMIN),
+  validateRequest(userStatusSchema),
+  adminController.updateUserStatus,
 );
 
 export const adminRoutes = router;

@@ -13,6 +13,7 @@ import { reviewRoutes } from "./modules/review/review.route";
 import { adminRoutes } from "./modules/admin/admin.route";
 import { paymentRoutes } from "./modules/payment/payment.route";
 import { notFound } from "./middleware/not-found";
+import { publicRoutes } from "./modules/public/public.route";
 
 const app: Application = express();
 
@@ -25,6 +26,7 @@ app.use(express.text());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.use("/api/public", publicRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/services", servicesRoutes);

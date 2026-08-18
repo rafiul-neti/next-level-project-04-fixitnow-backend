@@ -15,17 +15,6 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = userIdSchema.parse(req.params);
-  const result = await adminService.updateUserStatusByUserId(userId, req.body);
-
-  sendSuccessResponse(res, {
-    statusCode: httpStatus.OK,
-    message: result.message,
-    data: result.data,
-  });
-});
-
 const getAllBookings = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.getAllBookingsFromDB();
 
@@ -46,6 +35,26 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const adminDashboardStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getAdminDashboardStats();
+
+  sendSuccessResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Retrieved admin dashboard stats.",
+    data: result,
+  });
+});
+
+const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = userIdSchema.parse(req.params);
+  const result = await adminService.updateUserStatusByUserId(userId, req.body);
+
+  sendSuccessResponse(res, {
+    statusCode: httpStatus.OK,
+    message: result.message,
+    data: result.data,
+  });
+});
 const createNewServiceCategory = catchAsync(
   async (req: Request, res: Response) => {
     const result = await adminService.createNewServiceCategoryIntoDB(req.body);
@@ -60,8 +69,9 @@ const createNewServiceCategory = catchAsync(
 
 export const adminController = {
   getAllUsers,
-  updateUserStatus,
   getAllBookings,
   getAllCategories,
+  adminDashboardStats,
+  updateUserStatus,
   createNewServiceCategory,
 };

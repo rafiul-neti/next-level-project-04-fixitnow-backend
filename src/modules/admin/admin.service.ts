@@ -7,6 +7,7 @@ import httpStatus from "http-status";
 
 const getAllUsersFromDB = async () => {
   const users = await prisma.user.findMany({
+    where: { role: { not: Role.ADMIN } },
     omit: { password: true, updatedAt: true },
   });
 

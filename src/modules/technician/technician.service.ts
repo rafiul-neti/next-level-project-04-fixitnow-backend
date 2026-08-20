@@ -188,10 +188,10 @@ const updateTechnicianProfileByTechnicianId = async (
 };
 
 const updateAvailabilitySlotsByTechnicianId = async (
-  userId: string,
+  technicianId: string,
   payload: UpdateAvailabilitySlots,
 ) => {
-  const technician = await getTechnicianOrThrow(userId);
+  const technician = await getTechnicianOrThrow(technicianId);
 
   const updateAvailability = await prisma.availability.update({
     where: {

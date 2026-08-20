@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import findUserOrThrow from "../../utils/findUserOrThrow";
 import { IAddress } from "./address.interface";
 
 const getAdressByUserId = async (userId: string) => {
@@ -14,12 +15,12 @@ const createOrUpdateAddress = async (userId: string, payload: IAddress) => {
   const { address_line_1, address_line_2, postCode, city, region, whereAbout } =
     payload;
 
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  const user = await findUserOrThrow(userId);
 
   const createdAddress = await prisma.address.upsert({
     where: {
       userId_whereAbout: {
-        userId,
+        userId: user.id,
         whereAbout,
       },
     },

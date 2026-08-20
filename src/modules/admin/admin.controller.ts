@@ -3,7 +3,7 @@ import catchAsync from "../../utils/catchAsync";
 import { adminService } from "./admin.service";
 import { sendSuccessResponse } from "../../utils/sendSuccessResponse";
 import httpStatus from "http-status";
-import { userIdSchema } from "./admin.validation";
+import { categoryIdSchema, userIdSchema } from "./admin.validation";
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await adminService.getAllUsersFromDB();
@@ -55,17 +55,31 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
     data: result.data,
   });
 });
-const createNewServiceCategory = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await adminService.createNewServiceCategoryIntoDB(req.body);
 
-    sendSuccessResponse(res, {
-      statusCode: httpStatus.CREATED,
-      message: "A new category created successfully.",
-      data: result,
-    });
-  },
-);
+const createNewCategory = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.createNewCategoryIntoDB(req.body);
+
+  sendSuccessResponse(res, {
+    statusCode: httpStatus.CREATED,
+    message: "A new category created successfully.",
+    data: result,
+  });
+});
+
+const createNewService = catchAsync(async (req: Request, res: Response) => {
+  const { categoryId } = categoryIdSchema.parse(req.params);
+
+  const result = await adminService.createNewServiceIntoDB(
+    categoryId,
+    req.body,
+  );
+
+  sendSuccessResponse(res, {
+    statusCode: httpStatus.CREATED,
+    message: "A new service created successfully.",
+    data: result,
+  });
+});
 
 export const adminController = {
   getAllUsers,
@@ -73,5 +87,6 @@ export const adminController = {
   getAllCategories,
   adminDashboardStats,
   updateUserStatus,
-  createNewServiceCategory,
+  createNewCategory,
+  createNewService,
 };

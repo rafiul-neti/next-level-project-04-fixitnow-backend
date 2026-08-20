@@ -143,7 +143,7 @@ const refreshToken = async (token: string) => {
   return { accessToken };
 };
 
-const getCurrentUserFromDB = async (userId: string, role: string) => {
+const getCurrentUserFromDB = async (userId: string, role: Role) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     omit: { password: true },
@@ -151,7 +151,7 @@ const getCurrentUserFromDB = async (userId: string, role: string) => {
       include: { technician: { omit: { userId: true } } },
     }),
     ...(role === Role.CUSTOMER && {
-      include: { addresses: { omit: { id: true, userId: true } } },
+      include: { addresses: { omit: { userId: true } } },
     }),
   });
 

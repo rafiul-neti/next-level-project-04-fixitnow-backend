@@ -16,6 +16,7 @@ const getTechniciansForAServiceByID = async (id: ServiceIdType) => {
         select: {
           service: {
             select: {
+              id: true,
               name: true,
               description: true,
               category: { select: { name: true } },
@@ -44,6 +45,7 @@ const getTechniciansForAServiceByID = async (id: ServiceIdType) => {
         name: t.user.name,
         hourlyRate: t.hourlyRate,
         averageRating,
+        serviceId: service?.id,
         serviceName: service?.name,
         serviceDescription: service?.description,
         serviceCategory: service?.category.name,

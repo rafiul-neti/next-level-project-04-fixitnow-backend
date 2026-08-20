@@ -2,22 +2,22 @@ import { z } from "zod";
 import { WhereAbout } from "../../../generated/prisma/enums";
 
 const createBookingWithExistingAddressSchema = z.object({
-  serviceId: z.string().uuid(),
-  technicianId: z.string().uuid(),
+  serviceId: z.uuid(),
+  technicianId: z.uuid(),
   useExistingAddress: z.literal(true),
-  addressId: z.string().uuid().optional(),
+  addressId: z.uuid().optional(),
 });
 
 const createBookingWithNewAddressSchema = z.object({
-  serviceId: z.string().uuid(),
-  technicianId: z.string().uuid(),
+  serviceId: z.uuid(),
+  technicianId: z.uuid(),
   useExistingAddress: z.literal(false),
   address_line_1: z.string(),
   address_line_2: z.string().optional(),
   postCode: z.string(),
   city: z.string(),
   region: z.string(),
-  whereAbout: z.nativeEnum(WhereAbout).optional(),
+  whereAbout: z.enum(WhereAbout).optional(),
 });
 
 export const createBookingSchema = z.discriminatedUnion("useExistingAddress", [

@@ -71,7 +71,7 @@ const updateAvailabilitySlots = catchAsync(
 
     sendSuccessResponse(res, {
       statusCode: httpStatus.OK,
-      message: "Technician user's availability slots updated successfully.",
+      message: "Technician's availability slots updated successfully.",
       data: result,
     });
   },

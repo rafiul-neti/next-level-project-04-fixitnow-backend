@@ -78,7 +78,10 @@ const createBookingIntoDB = async (
       });
 
       if (!address) {
-        throw new AppError(httpStatus.NOT_FOUND, "Address not found!");
+        throw new AppError(
+          httpStatus.NOT_FOUND,
+          "You don't have any existing address. Please use an address to book this service.",
+        );
       }
 
       if (address.userId !== userId) {

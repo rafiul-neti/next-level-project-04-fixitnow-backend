@@ -2,13 +2,18 @@ import { Role } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import findUserOrThrow from "../../utils/findUserOrThrow";
-import { CreateCategory, UserStatusInput } from "./admin.validation";
+import {
+  CreateCategory,
+  CreateService,
+  UserStatusInput,
+} from "./admin.validation";
 import httpStatus from "http-status";
 
 const getAllUsersFromDB = async () => {
   const users = await prisma.user.findMany({
     where: { role: { not: Role.ADMIN } },
     omit: { password: true, updatedAt: true },
+    orderBy: { createdAt: "desc" },
   });
 
   return users;
@@ -117,7 +122,7 @@ const updateUserStatusByUserId = async (
   return { message: "User's status updated successfully.", data: updateUser };
 };
 
-const createNewServiceCategoryIntoDB = async (payload: CreateCategory) => {
+const createNewCategoryIntoDB = async (payload: CreateCategory) => {
   const category = await prisma.category.findUnique({
     where: { name: payload.name },
   });
@@ -129,9 +134,33 @@ const createNewServiceCategoryIntoDB = async (payload: CreateCategory) => {
     );
   }
 
-  const newCategory = await prisma.category.create({ data: { ...payload } });
+  const newCategory = await prisma.category.create({
+    data: { ...payload },
+    include: { services: true },
+  });
 
   return newCategory;
+};
+
+const createNewServiceIntoDB = async (
+  categoryId: string,
+  payload: CreateService,
+) => {
+  const isCategoryExists = await prisma.category.findUnique({
+    where: { id: categoryId },
+  });
+
+  if (!isCategoryExists)
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "A category doesn't exists for this service! Please create a category first.",
+    );
+
+  const newService = await prisma.service.create({
+    data: { categoryId: isCategoryExists.id, ...payload },
+  });
+
+  return newService;
 };
 
 export const adminService = {
@@ -140,5 +169,6 @@ export const adminService = {
   getAllBookingsFromDB,
   getAllCategoriesFromDB,
   updateUserStatusByUserId,
-  createNewServiceCategoryIntoDB,
+  createNewCategoryIntoDB,
+  createNewServiceIntoDB,
 };
